@@ -1,0 +1,151 @@
+<html>
+	<head>
+		<meta charset="utf-8">
+		<link href="glDatePicker/styles/glDatePicker.default.css" rel="stylesheet" type="text/css">
+	</head>
+	<body>
+		<script src="jquery.min.js"></script>
+    	<script src="glDatePicker/glDatePicker.min.js"></script>
+
+    	<input type="text" id="mydate" gldp-id="mydate" />
+    	<div gldp-el="mydate" style="width:400px; height:300px; position:absolute; top:70px; left:100px;">
+    	</div>
+
+		<script type="text/javascript">
+        	const N=5;
+        	var now;
+            var commitedDates;
+            var totalCommitedDatesArray=[];
+            
+            var myDatePicker;
+            var transitDate=new Date();
+
+            function glDatePicker_refresh()
+            {
+                myDatePicker.options.selectableDates=totalCommitedDatesArray; //указываем ячейки календаря, которые пользователь может выбирать
+                myDatePicker.render();//перерисовываем
+
+            }
+        	          
+
+            $(window).load(function()
+        	{ 
+                 now=new Date(); 
+
+                 getCommittedDates(now);
+
+                 myDatePicker=$('input').glDatePicker(
+                                                {
+                                                    showAlways: true,
+                                                    
+                                                    selectedDate: now,
+                                                    allowMonthSelect: false,
+                                                    allowYearSelect: false,
+                                                    selectableDates: totalCommitedDatesArray,
+
+                                                    onClick: function(target, cell, date, data) {
+                                                        target.val(date.getFullYear() + ' - ' +
+                                                        date.getMonth() + ' - ' +
+                                                        date.getDate());
+
+                                                        
+                                                        //при каждом клике проводим обработку даты, на котрую кликнули
+                                                        transitDate.setDate(date.getDate());
+                                                        transitDate.setMonth(date.getMonth());
+                                                        transitDate.setFullYear(date.getFullYear());
+                                                        getCommittedDates();
+                                                    }
+                                                }
+                                            ).glDatePicker(true);
+
+          	 	 
+          	 	 
+       		});
+
+			function getCommittedDates() {
+				  var s_date=(transitDate.getFullYear())+'-'+(transitDate.getMonth()+1)+'-'+(transitDate.getDate());
+				  
+                  $.post("get_Data_Commitment.php", {s_date}, function(data) { update_glDatePicker(data); })//отправляем данные и указываем функцию, которая будет обрабатывать пришедшие в ответ данные
+                  
+			}
+
+			function update_glDatePicker(i_data) { 
+
+                var commitedDatesArr=requestParse(i_data);//парсим входной ответ
+    			var boolDatesArr=[];
+
+    			for (var i=1; i<=30; i++)//формируем бинарный массив
+    			{
+    					if (commitedDatesArr[i]>=N)
+    					{
+    						boolDatesArr[i]=0;
+    					}
+    					else { boolDatesArr[i]=1; }
+    			}
+
+                setglDatePickerDatesStatus(boolDatesArr);
+            }
+
+            function setglDatePickerDatesStatus(i_boolDatesArr)//формируем массив из дат
+            {
+            	
+                var date1=new Date();
+                var l1=totalCommitedDatesArray.length;//определяем индекс, будем добавлять в конец массива
+                
+            	date1.setDate(transitDate.getDate());
+                date1.setMonth(transitDate.getMonth());
+                date1.setFullYear(transitDate.getFullYear());
+                
+                if (i_boolDatesArr[1]==0)//если 0, значит на этот день уже есть бронь
+                    alert('Данная дата недоступна для бронирования');
+                
+            	for (var i=0; i<30; i++) {
+                    
+            		if (i_boolDatesArr[i+1]==1)//если 1, то дата свободна для бронироввания
+                    {
+                      totalCommitedDatesArray[l1]=new Object();
+                      totalCommitedDatesArray[l1].date=new Date();
+                      
+                      totalCommitedDatesArray[l1].date.setDate(date1.getDate());
+                      totalCommitedDatesArray[l1].date.setMonth(date1.getMonth());
+                      totalCommitedDatesArray[l1].date.setFullYear(date1.getFullYear());
+                      l1++; 
+                    }
+                    date1.setDate(date1.getDate()+1);
+            	}            
+                glDatePicker_refresh();
+            }
+
+            function requestParse(str) 
+            {
+            	var str1=str.substring(str.indexOf('Array'));
+            	
+            	var keyDay;
+            	var valueDay;
+            	var klbIndex=str1.indexOf('['); //координата левой скобки ключа
+            	var krbIndex=str1.indexOf(']');//координата правой скобки ключа
+            	var arrDay={};
+
+            	while (krbIndex>-1) {
+            		keyDay=(str1.substring(klbIndex+1,krbIndex));
+            		valueDay=(str1.substr(krbIndex+5,2));
+            		
+            		str1=str1.substring(krbIndex+1);	
+            		klbIndex=str1.indexOf('['); //координата левой скобки ключа
+            	    krbIndex=str1.indexOf(']');//координата правой скобки ключа
+            	    arrDay[keyDay]=valueDay;
+            	}
+            	
+            	return arrDay;
+            }
+
+
+    	</script>
+
+
+		
+		
+	</body>
+</html>
+
+
