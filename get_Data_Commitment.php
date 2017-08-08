@@ -16,7 +16,7 @@
 		require_once(__DIR__ . '/vendor/autoload.php');
 
 		// Configure API key authorization: api_key
-		Introvert\Configuration::getDefaultConfiguration()->setApiKey('key', 'a68eb01d5aa7d40ae45af4825d8d713a');
+		Introvert\Configuration::getDefaultConfiguration()->setApiKey('key', '');//здесь нужно ввести хэш-ключ доступа
 
 		$api = new Introvert\ApiClient();
 		$crm_user_id = array(); // int[] | фильтр по id ответственного
